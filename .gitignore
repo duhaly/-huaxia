@@ -1,3 +1,9 @@
+# 忽略根目录下所有文件，只保留目录和指定文件
+/*
+!*/
+!.gitignore
+!README.md
+!LICENSE
 # Logs
 logs
 *.log
