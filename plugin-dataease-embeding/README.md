@@ -1,0 +1,1 @@
+# @huaxia/plugin-dataease-embeding
