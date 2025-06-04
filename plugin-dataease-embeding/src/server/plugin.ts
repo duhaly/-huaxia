@@ -23,7 +23,7 @@ export class PluginDataeaseEmbedingServer extends Plugin {
   }
 
   async load() {
-    this.app.acl.allow(this.resoureName, 'generate', 'public');
+    this.app.acl.allow(this.resoureName, 'generate', 'loggedIn');
   }
 
   async install() {}

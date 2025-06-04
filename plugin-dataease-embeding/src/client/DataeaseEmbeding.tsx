@@ -37,6 +37,7 @@ export const DataeaseEmbeding: any = observer(
     const { t } = useTranslation();
     const { token } = theme.useToken();
     const targetHeight = useBlockHeight() || height;
+    console.log('DataeaseEmbeding - targetHeight:', targetHeight);
     const variables = useVariables();
     const localVariables = useLocalVariables();
     const compile = useCompile();
@@ -46,6 +47,21 @@ export const DataeaseEmbeding: any = observer(
     const [embeddedTokenState, setEmbeddedTokenState] = useState<string | undefined>(undefined);
     const [sendMessageSignalReceived, setSendMessageSignalReceived] = useState(false);
     const apiClient = useAPIClient();
+    const [currentUser, setCurrentUser] = useState<any>(null);
+
+    useEffect(() => {
+      const fetchCurrentUser = async () => {
+        try {
+          const response = await apiClient.resource('users').get({ action: 'me' });
+          setCurrentUser(response.data);
+        } catch (error) {
+          console.error('Error fetching current user:', error);
+          setCurrentUser(null);
+        }
+      };
+
+      fetchCurrentUser();
+    }, [apiClient]);
 
     useEffect(() => {
       const generateSrcAndFetchToken = async () => {
@@ -58,33 +74,33 @@ export const DataeaseEmbeding: any = observer(
           setEmbeddedTokenState(fetchedToken);
 
           if (!fetchedToken) {
-             console.error('Failed to get embeddedToken.');
-             return;
+            console.error('Failed to get embeddedToken.');
+            return;
           }
 
           let targetSrc: string;
           targetSrc = await parseURLAndParams(url, params || []);
           if (!targetSrc) {
-              console.warn('URL mode requires a valid URL.');
-              return;
+            console.warn('URL mode requires a valid URL.');
+            return;
           }
 
           setSrc(targetSrc);
 
         } catch (error) {
           console.error('Error generating iframe source or fetching token:', error);
-           setEmbeddedTokenState(undefined);
+          setEmbeddedTokenState(undefined);
         }
       };
 
       const requiredDepsReady = !!url;
 
       if (requiredDepsReady) {
-           if (src === undefined) {
-               generateSrcAndFetchToken();
-           }
+        if (src === undefined) {
+          generateSrcAndFetchToken();
+        }
       } else if (!url) {
-          console.warn('URL mode requires a URL.');
+        console.warn('URL mode requires a URL.');
       }
 
     }, [url, variables, localVariables, params, account, apiClient, compile, parseURLAndParams]);
@@ -95,79 +111,101 @@ export const DataeaseEmbeding: any = observer(
     };
 
     useEffect(() => {
-        const _message_ = (event: MessageEvent) => {
-          if (event.data?.msgOrigin !== 'de-fit2cloud') {
-            return;
-          }
+      const _message_ = (event: MessageEvent) => {
+        if (event.data?.msgOrigin !== 'de-fit2cloud') {
+          return;
+        }
 
-          console.log('Received message from iframe (de-fit2cloud): ', event.data);
+        console.log('Received message from iframe (de-fit2cloud): ', event.data);
 
-          setSendMessageSignalReceived(true);
-        };
+        setSendMessageSignalReceived(true);
+      };
 
-        window.addEventListener('message', _message_);
+      window.addEventListener('message', _message_);
 
-        return () => {
-          window.removeEventListener('message', _message_);
-        };
+      return () => {
+        window.removeEventListener('message', _message_);
+      };
 
     }, [setSendMessageSignalReceived]);
 
     useEffect(() => {
-        const iframe = iframeRef.current;
+      const iframe = iframeRef.current;
 
-        // Check conditions directly, without polling
-        if (sendMessageSignalReceived && embeddedTokenState && iframe && iframe.contentWindow && typeof iframe.src === 'string' && iframe.src !== '') {
-             const paramsToSend = {
-                  busiFlag: 'dashboard',
-                  dvId: templateId,
-                  type: 'Dashboard',
-                  embeddedToken: embeddedTokenState,
-                  'de-embedded': true,
-                };
+      // Check conditions directly, without polling
+      if (sendMessageSignalReceived && embeddedTokenState && iframe && iframe.contentWindow && typeof iframe.src === 'string' && iframe.src !== '') {
 
-                let targetOrigin: string;
-                if (iframe.src.startsWith('data:')) {
-                    targetOrigin = '*';
-                } else {
-                     try {
-                        const urlObj = new URL(iframe.src);
-                        targetOrigin = urlObj.origin;
-                     } catch (e) {
-                         console.error('Error determining origin from iframe.src:', e);
-                         targetOrigin = '*';
-                         console.warn('Failed to determine specific origin, falling back to *: ', targetOrigin);
-                     }
-                }
+        //
+        //初始化参数一定要有，否则可能越权
+        //
+        const initParams = {
+          attachParams: {
+            userId: '',
+            orgId: ''
+          }
+        }
+        const outerParamsContent = {
+          attachParams: {
+            org: '西安分行',
+            userId: '20373',//currentUser?.id,
+            orgId: '1400',//currentUser?.organization?.id,
+          },
+          callBackFlag: true,
+          targetSourceId: '',
+          type: 'attachParams',
+        };
 
-                try {
-                     iframe.contentWindow.postMessage(paramsToSend, targetOrigin);
-                     // Reset signal after sending message
-                     setSendMessageSignalReceived(false);
+        const paramsToSend = {
+          busiFlag: 'dashboard',
+          dvId: templateId,
+          type: 'Dashboard',
+          embeddedToken: embeddedTokenState,
+          'de-embedded': true,
+          outerParams: JSON.stringify(outerParamsContent),
+        };
 
-                 } catch (e) {
-                      console.error('Error sending postMessage:', e);
-                 }
-
+        let targetOrigin: string;
+        if (iframe.src.startsWith('data:')) {
+          targetOrigin = '*';
+        } else {
+          try {
+            const urlObj = new URL(iframe.src);
+            targetOrigin = urlObj.origin;
+          } catch (e) {
+            console.error('Error determining origin from iframe.src:', e);
+            targetOrigin = '*';
+            console.warn('Failed to determine specific origin, falling back to *: ', targetOrigin);
+          }
         }
 
-    }, [sendMessageSignalReceived, embeddedTokenState, templateId]); // Keep relevant dependencies
+        try {
+          iframe.contentWindow.postMessage(paramsToSend, targetOrigin);
+          // Reset signal after sending message
+          setSendMessageSignalReceived(false);
+
+        } catch (e) {
+          console.error('Error sending postMessage:', e);
+        }
+
+      }
+
+    }, [sendMessageSignalReceived, embeddedTokenState, templateId, currentUser]); // Add currentUser to dependencies
 
     if (!url) {
       return (
         <Card
-          style={{ marginBottom: token.padding, height: isNumeric(targetHeight) ? `${targetHeight}px` : targetHeight }}
+          style={{ height: isNumeric(targetHeight) ? `${targetHeight}px` : '100%', marginBottom: token.padding }}
         >
           {t('Please fill in the iframe URL')}
         </Card>
       );
     }
 
-    if (src === undefined || !embeddedTokenState) {
-       return (
+    if (src === undefined || !embeddedTokenState || !currentUser) {
+      return (
         <div
           style={{
-            height: isNumeric(targetHeight) ? `${targetHeight}px` : targetHeight || '60vh',
+            height: isNumeric(targetHeight) ? `${targetHeight}px` : '100%',
             marginBottom: token.padding,
             border: 0,
             display: 'flex',
@@ -181,33 +219,32 @@ export const DataeaseEmbeding: any = observer(
     }
 
     if (src) {
-        const sandboxValue = Array.isArray(sandboxProp)
-            ? sandboxProp.join(' ')
-            : typeof sandboxProp === 'string' ? sandboxProp : undefined;
+      const sandboxValue = Array.isArray(sandboxProp)
+        ? sandboxProp.join(' ')
+        : typeof sandboxProp === 'string' ? sandboxProp : undefined;
 
-        return (
-          <iframe
-            src={src}
-            ref={iframeRef}
-            width="100%"
-            style={{
-              height: isNumeric(targetHeight) ? `${targetHeight}px` : targetHeight || '60vh',
-              marginBottom: '24px',
-              border: 0,
-              display: 'block',
-              position: 'relative',
-            }}
-            {...(sandboxValue !== undefined && { sandbox: sandboxValue })}
-            {...(loadingProp && loadingProp !== 'auto' && { loading: loadingProp })}
-            {...others}
-          />
-        );
+      return (
+        <iframe
+          src={src}
+          ref={iframeRef}
+          width="100%"
+          style={{
+            height: isNumeric(targetHeight) ? `${targetHeight}px` : targetHeight || '60vh',
+            border: 0,
+            display: 'block',
+            position: 'relative',
+          }}
+          {...(sandboxValue !== undefined && { sandbox: sandboxValue })}
+          {...(loadingProp && loadingProp !== 'auto' && { loading: loadingProp })}
+          {...others}
+        />
+      );
     } else {
-        return (
-             <Card style={{ marginBottom: token.padding, height: isNumeric(targetHeight) ? `${targetHeight}px` : targetHeight }}>
-                 {t('Failed to load iframe.')}
-             </Card>
-        );
+      return (
+        <Card style={{ height: isNumeric(targetHeight) ? `${targetHeight}px` : '100%', marginBottom: token.padding }}>
+          {t('Failed to load iframe.')}
+        </Card>
+      );
     }
   },
   { displayName: 'DataeaseEmbeding' },
