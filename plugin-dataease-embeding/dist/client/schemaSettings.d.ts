@@ -7,8 +7,4 @@
  * For more information, please refer to: https://www.nocobase.com/agreement.
  */
 import { SchemaSettings } from '@nocobase/client';
-/**
- * @deprecated
- */
-export declare const dataeaseEmbedingBlockSchemaSettings_deprecated: SchemaSettings<{}>;
 export declare const dataeaseEmbedingBlockSchemaSettings: SchemaSettings<{}>;

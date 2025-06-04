@@ -9,11 +9,10 @@
 
 import { Plugin } from '@nocobase/client';
 import { DataeaseEmbedingBlockProvider } from './DataeaseEmbedingBlockProvider';
-import { dataeaseEmbedingBlockSchemaSettings, dataeaseEmbedingBlockSchemaSettings_deprecated } from './schemaSettings';
+import { dataeaseEmbedingBlockSchemaSettings } from './schemaSettings';
 
 export class PluginBlockDataeaseEmbedingClient extends Plugin {
   async load() {
-    this.app.schemaSettingsManager.add(dataeaseEmbedingBlockSchemaSettings_deprecated);
     this.app.schemaSettingsManager.add(dataeaseEmbedingBlockSchemaSettings);
     this.app.use(DataeaseEmbedingBlockProvider);
     const blockInitializers = this.app.schemaInitializerManager.get('page:addBlock');

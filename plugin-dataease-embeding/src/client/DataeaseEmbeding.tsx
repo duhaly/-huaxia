@@ -9,21 +9,17 @@
 
 import { observer, useField } from '@formily/react';
 import {
-  getRenderContent,
   useBlockHeight,
   useCompile,
   useLocalVariables,
   useParseURLAndParams,
-  useRequest,
   useVariables,
   useAPIClient,
 } from '@nocobase/client';
 import { Card, Spin, theme } from 'antd';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import RIframe from 'react-iframe';
 import type { IIframe } from 'react-iframe/types';
-import { DataeaseEmbedingDesigner } from './DataeaseEmbeding.Designer';
 
 
 function isNumeric(str: string | undefined) {
@@ -31,12 +27,12 @@ function isNumeric(str: string | undefined) {
   return (
     !isNaN(str as any) && // use type coercion to parse the _entirety_ of the string (`parseFloat` alone does not do this)...
     !isNaN(parseFloat(str))
-  ); // ...and ensure strings of whitespace fail
+  );
 }
 
 export const DataeaseEmbeding: any = observer(
-  (props: IIframe & { html?: string; htmlId?: number; mode: string; params?: any; engine?: string; account: string; templateId: string | number; ref?: React.Ref<HTMLIFrameElement> }) => {
-    const { url, htmlId, mode = 'url', height, html, params, engine, account, loading: loadingProp, sandbox: sandboxProp, templateId, ...others } = props;
+  (props: IIframe & { params?: any; account: string; templateId: string | number; ref?: React.Ref<HTMLIFrameElement> }) => {
+    const { url, height, params, account, sandbox: sandboxProp, templateId, loading: loadingProp, ...others } = props;
     const field = useField();
     const { t } = useTranslation();
     const { token } = theme.useToken();
@@ -45,15 +41,6 @@ export const DataeaseEmbeding: any = observer(
     const localVariables = useLocalVariables();
     const compile = useCompile();
     const iframeRef = useRef<HTMLIFrameElement>(null);
-    const { loading, data: htmlContent } = useRequest<string>(
-      {
-        url: `iframeHtml:getHtml/${htmlId}`,
-      },
-      {
-        refreshDeps: [htmlId, field.data],
-        ready: mode === 'html' && !!htmlId,
-      },
-    );
     const { parseURLAndParams } = useParseURLAndParams();
     const [src, setSrc] = useState<string | undefined>(undefined);
     const [embeddedTokenState, setEmbeddedTokenState] = useState<string | undefined>(undefined);
@@ -76,30 +63,10 @@ export const DataeaseEmbeding: any = observer(
           }
 
           let targetSrc: string;
-          if (mode === 'html') {
-            const targetHtmlContent = await getRenderContent(
-              engine,
-              htmlContent,
-              compile(variables),
-              compile(localVariables),
-              (data) => {
-                return data;
-              },
-            );
-
-            if (targetHtmlContent === undefined) {
-              console.warn('HTML content is undefined.');
+          targetSrc = await parseURLAndParams(url, params || []);
+          if (!targetSrc) {
+              console.warn('URL mode requires a valid URL.');
               return;
-            }
-
-            targetSrc = 'data:text/html;charset=utf-8,' + encodeURIComponent(targetHtmlContent);
-
-          } else {
-            targetSrc = await parseURLAndParams(url, params || []);
-            if (!targetSrc) {
-                console.warn('URL mode requires a valid URL.');
-                return;
-            }
           }
 
           setSrc(targetSrc);
@@ -110,17 +77,17 @@ export const DataeaseEmbeding: any = observer(
         }
       };
 
-      const requiredDepsReady = mode === 'html' ? !!htmlId && htmlContent !== undefined : !!url;
+      const requiredDepsReady = !!url;
 
       if (requiredDepsReady) {
            if (src === undefined) {
                generateSrcAndFetchToken();
            }
-      } else if (mode === 'url' && !url) {
+      } else if (!url) {
           console.warn('URL mode requires a URL.');
       }
 
-    }, [htmlContent, mode, url, variables, localVariables, params, account, apiClient, htmlId, engine, compile, parseURLAndParams]);
+    }, [url, variables, localVariables, params, account, apiClient, compile, parseURLAndParams]);
 
     const dataeaseCallBack = (args: any) => {
       console.log('DataEase callback:', args);
@@ -186,7 +153,7 @@ export const DataeaseEmbeding: any = observer(
 
     }, [sendMessageSignalReceived, embeddedTokenState, templateId]); // Keep relevant dependencies
 
-    if ((mode === 'url' && !url) || (mode === 'html' && !htmlId)) {
+    if (!url) {
       return (
         <Card
           style={{ marginBottom: token.padding, height: isNumeric(targetHeight) ? `${targetHeight}px` : targetHeight }}
@@ -196,7 +163,7 @@ export const DataeaseEmbeding: any = observer(
       );
     }
 
-    if (src === undefined || !embeddedTokenState || (mode === 'html' && loading)) {
+    if (src === undefined || !embeddedTokenState) {
        return (
         <div
           style={{
@@ -231,6 +198,7 @@ export const DataeaseEmbeding: any = observer(
               position: 'relative',
             }}
             {...(sandboxValue !== undefined && { sandbox: sandboxValue })}
+            {...(loadingProp && loadingProp !== 'auto' && { loading: loadingProp })}
             {...others}
           />
         );
@@ -244,5 +212,3 @@ export const DataeaseEmbeding: any = observer(
   },
   { displayName: 'DataeaseEmbeding' },
 );
-
-DataeaseEmbeding.Designer = DataeaseEmbedingDesigner;

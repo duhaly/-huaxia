@@ -29,34 +29,13 @@ export const DataeaseEmbedingDesigner = () => {
   const { t } = useTranslation();
   const { dn } = useDesignable();
   const api = useAPIClient();
-  const { mode, url, htmlId, height = '60vh', engine } = fieldSchema['x-component-props'] || {};
+  const { url, height = '60vh' } = fieldSchema['x-component-props'] || {};
 
-  const saveHtml = async (html: string) => {
-    const options = {
-      values: { html },
-    };
-    if (htmlId) {
-      // eslint-disable-next-line no-unsafe-optional-chaining
-      const { data } = await api.resource('iframeHtml').update?.({ ...options, filterByTk: htmlId });
-      return data?.data?.[0] || { id: htmlId };
-    } else {
-      // eslint-disable-next-line no-unsafe-optional-chaining
-      const { data } = await api.resource('iframeHtml').create?.(options);
-      return data?.data;
-    }
-  };
-
-  const submitHandler = async ({ mode, url, html, height, engine }) => {
+  const submitHandler = async ({ url, height }) => {
     const componentProps = fieldSchema['x-component-props'] || {};
-    componentProps['mode'] = mode;
     componentProps['height'] = height;
     componentProps['url'] = url;
-    componentProps['engine'] = engine || 'string';
 
-    if (mode === 'html') {
-      const data = await saveHtml(html);
-      componentProps['htmlId'] = data.id;
-    }
     fieldSchema['x-component-props'] = componentProps;
     field.componentProps = { ...componentProps };
     field.data = { v: uid() };
@@ -83,15 +62,9 @@ export const DataeaseEmbedingDesigner = () => {
         title={t('Edit Dataease Embeding')}
         asyncGetInitialValues={async () => {
           const values = {
-            mode,
             url,
             height,
           };
-          if (htmlId) {
-            // eslint-disable-next-line no-unsafe-optional-chaining
-            const { data } = await api.resource('iframeHtml').get?.({ filterByTk: htmlId });
-            values['html'] = data?.data?.html || '';
-          }
           return values;
         }}
         schema={
@@ -99,17 +72,6 @@ export const DataeaseEmbedingDesigner = () => {
             type: 'object',
             title: t('Edit Dataease Embeding'),
             properties: {
-              mode: {
-                title: '{{t("Mode")}}',
-                'x-component': 'Radio.Group',
-                'x-decorator': 'FormItem',
-                required: true,
-                default: 'url',
-                enum: [
-                  { value: 'url', label: t('URL') },
-                  { value: 'html', label: t('HTML') },
-                ],
-              },
               url: {
                 title: t('URL'),
                 type: 'string',
@@ -119,50 +81,6 @@ export const DataeaseEmbedingDesigner = () => {
                   scope,
                 },
                 required: true,
-                'x-reactions': {
-                  dependencies: ['mode'],
-                  fulfill: {
-                    state: {
-                      hidden: '{{$deps[0] === "html"}}',
-                    },
-                  },
-                },
-              },
-              engine: {
-                title: '{{t("Template engine")}}',
-                'x-component': 'Radio.Group',
-                'x-decorator': 'FormItem',
-                enum: [
-                  { value: 'string', label: t('String template') },
-                  { value: 'handlebars', label: t('Handlebars') },
-                ],
-                'x-reactions': {
-                  dependencies: ['mode'],
-                  fulfill: {
-                    state: {
-                      hidden: '{{$deps[0] === "url"}}',
-                    },
-                  },
-                },
-              },
-              html: {
-                title: t('html'),
-                type: 'string',
-                'x-decorator': 'FormItem',
-                'x-component': 'Variable.RawTextArea',
-                'x-component-props': {
-                  scope,
-                  style: { minHeight: '200px' },
-                },
-                required: true,
-                'x-reactions': {
-                  dependencies: ['mode'],
-                  fulfill: {
-                    state: {
-                      hidden: '{{$deps[0] === "url"}}',
-                    },
-                  },
-                },
               },
               height: {
                 title: t('Height'),

@@ -13,33 +13,13 @@ import { uid } from '@formily/shared';
 import {
   SchemaSettings,
   SchemaSettingsBlockHeightItem,
-  Variable,
   useAPIClient,
   useDesignable,
-  useFormBlockContext,
-  useRecord,
   useURLAndHTMLSchema,
-  useVariableOptions,
 } from '@nocobase/client';
 import { Select, Tooltip } from 'antd';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-
-const getVariableComponentWithScope = (Com) => {
-  return (props) => {
-    const fieldSchema = useFieldSchema();
-    const { form } = useFormBlockContext();
-    const record = useRecord();
-    const scope = useVariableOptions({
-      collectionField: { uiSchema: fieldSchema },
-      form,
-      record,
-      uiSchema: fieldSchema,
-      noDisabled: true,
-    });
-    return <Com {...props} scope={scope} />;
-  };
-};
 
 const AllowOptionsHelp = ({ type }) => {
   const { t, i18n } = useTranslation();
@@ -129,27 +109,11 @@ const commonOptions: any = {
         const { t, i18n } = useTranslation();
         const { dn } = useDesignable();
         const api = useAPIClient();
-        const { mode, url, chartType, templateId, businessFlag, account, params, htmlId, height = '60vh', engine, allow } = fieldSchema['x-component-props'] || {};
-        const saveHtml = async (html: string) => {
-          const options = {
-            values: { html },
-          };
-          if (htmlId) {
-            // eslint-disable-next-line no-unsafe-optional-chaining
-            const { data } = await api.resource('iframeHtml').update?.({ ...options, filterByTk: htmlId });
-            return data?.data?.[0] || { id: htmlId };
-          } else {
-            // eslint-disable-next-line no-unsafe-optional-chaining
-            const { data } = await api.resource('iframeHtml').create?.(options);
-            return data?.data;
-          }
-        };
+        const { url, chartType, templateId, businessFlag, account, params, height = '60vh', allow } = fieldSchema['x-component-props'] || {};
         const { urlSchema, paramsSchema } = useURLAndHTMLSchema();
-        const submitHandler = async ({ mode, url, chartType, templateId, businessFlag, account, html, height, params, engine, allow }) => {
+        const submitHandler = async ({ url, chartType, templateId, businessFlag, account, height, params, allow }) => {
           const componentProps = fieldSchema['x-component-props'] || {};
-          componentProps['mode'] = mode;
           componentProps['height'] = height;
-          componentProps['engine'] = engine || 'string';
           componentProps['params'] = params;
           componentProps['url'] = url;
           componentProps['allow'] = allow;
@@ -157,10 +121,6 @@ const commonOptions: any = {
           componentProps['templateId'] = templateId;
           componentProps['businessFlag'] = businessFlag;
           componentProps['account'] = account;
-          if (mode === 'html') {
-            const data = await saveHtml(html);
-            componentProps['htmlId'] = data.id;
-          }
           fieldSchema['x-component-props'] = componentProps;
           field.componentProps = { ...componentProps };
           field.data = { v: uid() };
@@ -171,63 +131,29 @@ const commonOptions: any = {
             },
           });
         };
-        // 外部定义 description 的内容
-        const descriptionContent = (
-          <>
-            <span style={{ marginLeft: '.25em' }} className={'ant-formily-item-extra'}>
-              {t('Syntax references')}:
-            </span>{' '}
-            <a
-              href={`https://${i18n.language === 'zh-CN' ? 'docs-cn' : 'docs'
-                }.nocobase.com/handbook/template-handlebars`}
-              target="_blank"
-              rel="noreferrer"
-            >
-              Handlebars.js
-            </a>
-          </>
-        );
 
         return {
           title: t('Edit dataease embeding'),
           asyncGetInitialValues: async () => {
             const values = {
-              mode,
               url,
               chartType,
               templateId,
               businessFlag,
               account,
               height,
-              engine,
               params,
               allow,
             };
-            if (htmlId) {
-              // eslint-disable-next-line no-unsafe-optional-chaining
-              const { data } = await api.resource('iframeHtml').get?.({ filterByTk: htmlId });
-              values['html'] = data?.data?.html || '';
-            }
             return values;
           },
           schema: {
             type: 'object',
             title: t('Edit dataease embeding'),
             properties: {
-              mode: {
-                title: '{{t("Mode")}}',
-                'x-component': 'Radio.Group',
-                'x-decorator': 'FormItem',
-                required: true,
-                default: 'url',
-                enum: [
-                  { value: 'url', label: t('URL') },
-                  { value: 'html', label: t('HTML') },
-                ],
-              },
               url: {
                 ...urlSchema,
-                required: true,
+                required: true
               },
               chartType: {
                 title: '{{t("Chart Type")}}',
@@ -235,7 +161,6 @@ const commonOptions: any = {
                 'x-decorator': 'FormItem',
                 required: true,
                 default: 'chart',
-                'x-visible': '{{$values.mode === "url"}}',
                 enum: [
                   { value: 'dashboard', label: t('Dashboard') },
                   { value: 'chart', label: t('Chart') },
@@ -247,7 +172,6 @@ const commonOptions: any = {
                 type: 'string',
                 'x-component': 'Input',
                 'x-decorator': 'FormItem',
-                'x-visible': '{{$values.mode === "url"}}',
                 required: true,
                 'x-component-props': {
                   placeholder: '{{t("Please enter template ID")}}',
@@ -258,7 +182,6 @@ const commonOptions: any = {
                 type: 'string',
                 'x-component': 'Input',
                 'x-decorator': 'FormItem',
-                'x-visible': '{{$values.mode === "url"}}',
                 required: true,
                 'x-component-props': {
                   placeholder: '{{t("Please enter business flag")}}',
@@ -269,7 +192,6 @@ const commonOptions: any = {
                 type: 'string',
                 'x-component': 'Input',
                 'x-decorator': 'FormItem',
-                'x-visible': '{{$values.mode === "url"}}',
                 required: true,
               },
               allow: {
@@ -298,53 +220,6 @@ const commonOptions: any = {
                 description: <AllowDescription />,
               },
               params: paramsSchema,
-              engine: {
-                title: '{{t("Template engine")}}',
-                'x-component': 'Radio.Group',
-                'x-decorator': 'FormItem',
-                default: 'string',
-                enum: [
-                  { value: 'string', label: t('String template') },
-                  { value: 'handlebars', label: t('Handlebars') },
-                ],
-                'x-reactions': {
-                  dependencies: ['mode'],
-                  fulfill: {
-                    state: {
-                      hidden: '{{$deps[0] === "url"}}',
-                    },
-                  },
-                },
-              },
-              html: {
-                title: t('html'),
-                type: 'string',
-                'x-decorator': 'FormItem',
-                'x-component': getVariableComponentWithScope(Variable.RawTextArea),
-                'x-component-props': {
-                  rows: 10,
-                },
-                required: true,
-                description: descriptionContent,
-                'x-reactions': [
-                  {
-                    dependencies: ['mode'],
-                    fulfill: {
-                      state: {
-                        hidden: '{{$deps[0] === "url"}}',
-                      },
-                    },
-                  },
-                  (field) => {
-                    const { engine } = field.form.values;
-                    if (engine === 'handlebars') {
-                      field.description = descriptionContent;
-                    } else {
-                      field.description = null;
-                    }
-                  },
-                ],
-              },
             },
           } as ISchema,
           onSubmit: submitHandler,
@@ -375,14 +250,6 @@ const commonOptions: any = {
     },
   ],
 };
-
-/**
- * @deprecated
- */
-export const dataeaseEmbedingBlockSchemaSettings_deprecated = new SchemaSettings({
-  name: 'dataeaseEmbedingBlockSchemaSettings',
-  ...commonOptions,
-});
 
 export const dataeaseEmbedingBlockSchemaSettings = new SchemaSettings({
   name: 'blockSettings:dataease-embeding',
