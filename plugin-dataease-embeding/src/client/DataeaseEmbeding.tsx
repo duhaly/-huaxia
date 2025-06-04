@@ -15,6 +15,7 @@ import {
   useParseURLAndParams,
   useVariables,
   useAPIClient,
+  useCurrentUserContext
 } from '@nocobase/client';
 import { Card, Spin, theme } from 'antd';
 import React, { useEffect, useRef, useState } from 'react';
@@ -47,21 +48,22 @@ export const DataeaseEmbeding: any = observer(
     const [embeddedTokenState, setEmbeddedTokenState] = useState<string | undefined>(undefined);
     const [sendMessageSignalReceived, setSendMessageSignalReceived] = useState(false);
     const apiClient = useAPIClient();
-    const [currentUser, setCurrentUser] = useState<any>(null);
+    // const [currentUser, setCurrentUser] = useState<any>(null);
 
-    useEffect(() => {
-      const fetchCurrentUser = async () => {
-        try {
-          const response = await apiClient.resource('users').get({ action: 'me' });
-          setCurrentUser(response.data);
-        } catch (error) {
-          console.error('Error fetching current user:', error);
-          setCurrentUser(null);
-        }
-      };
+    const currentUser = useCurrentUserContext();
+    // useEffect(() => {
+    //   const fetchCurrentUser = async () => {
+    //     try {
+    //       const response = await apiClient.resource('users').get({ action: 'me' });
+    //       setCurrentUser(response.data);
+    //     } catch (error) {
+    //       console.error('Error fetching current user:', error);
+    //       setCurrentUser(null);
+    //     }
+    //   };
 
-      fetchCurrentUser();
-    }, [apiClient]);
+    //   fetchCurrentUser();
+    // }, [apiClient]);
 
     useEffect(() => {
       const generateSrcAndFetchToken = async () => {
@@ -144,16 +146,23 @@ export const DataeaseEmbeding: any = observer(
             orgId: ''
           }
         }
+        console.log('currentUser', currentUser);
+
         const outerParamsContent = {
           attachParams: {
-            org: '西安分行',
-            userId: '20373',//currentUser?.id,
-            orgId: '1400',//currentUser?.organization?.id,
+            orgName: currentUser.data.data.departments.map((department: any) => department.title),
+            managerId: currentUser.data.data.xch,
+            userName: currentUser.data.data.nickname,
+            oa: currentUser.data.data.username,
+            id: currentUser.data.data.ygbh,
+            orgId: currentUser.data.data.departments.map((department: any) => department.jgbh),
           },
           callBackFlag: true,
           targetSourceId: '',
           type: 'attachParams',
         };
+
+        console.log('outerParamsContent', outerParamsContent);
 
         const paramsToSend = {
           busiFlag: 'dashboard',

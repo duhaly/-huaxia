@@ -55,8 +55,6 @@ function generateToken(account: string, appId: string, appSecret: string) {
     // 4. 拼接成 JWT
     return `${encodedHeader}.${encodedPayload}.${encodedSignature}`;
 
-
-
 }
 function toBase64Url(input: Buffer): string {
     return input.toString('base64url');

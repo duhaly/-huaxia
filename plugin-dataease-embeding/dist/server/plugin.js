@@ -37,16 +37,12 @@ class PluginDataeaseEmbedingServer extends import_server.Plugin {
   async afterAdd() {
   }
   async beforeLoad() {
-    this.app.resourcer.define({
+    this.app.resourceManager.define({
       name: this.resoureName,
       actions: {
         generate: import_generate.generate
       },
       only: ["generate"]
-    });
-    this.app.acl.registerSnippet({
-      name: ["pm", this.name, "configuration"].join("."),
-      actions: ["generate"]
     });
   }
   async load() {

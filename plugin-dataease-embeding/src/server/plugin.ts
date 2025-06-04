@@ -5,20 +5,15 @@ export class PluginDataeaseEmbedingServer extends Plugin {
 
   resoureName = 'dataeaseEmbeding';
 
-  async afterAdd() {}
+  async afterAdd() { }
 
   async beforeLoad() {
-    this.app.resourcer.define({
+    this.app.resourceManager.define({
       name: this.resoureName,
       actions: {
         generate,
       },
       only: ['generate'],
-    });
-
-    this.app.acl.registerSnippet({
-      name: ['pm', this.name, 'configuration'].join('.'),
-      actions: ['generate'],
     });
   }
 
@@ -26,13 +21,14 @@ export class PluginDataeaseEmbedingServer extends Plugin {
     this.app.acl.allow(this.resoureName, 'generate', 'loggedIn');
   }
 
-  async install() {}
+  async install() { }
 
-  async afterEnable() {}
+  async afterEnable() { }
 
-  async afterDisable() {}
+  async afterDisable() { }
 
-  async remove() {}
+  async remove() { }
 }
 
 export default PluginDataeaseEmbedingServer;
+
