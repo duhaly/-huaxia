@@ -10,7 +10,6 @@
 import { ISchema, useField, useFieldSchema } from '@formily/react';
 import { uid } from '@formily/shared';
 import {
-  GeneralSchemaDesigner,
   SchemaToolbar,
   SchemaSettingsDivider,
   SchemaSettingsModalItem,
@@ -18,7 +17,7 @@ import {
   useAPIClient,
   useDesignable,
   useFormBlockContext,
-  useRecord,
+  useCollectionRecord,
   useVariableOptions,
 } from '@nocobase/client';
 import React from 'react';
@@ -69,7 +68,7 @@ export const DataeaseEmbedingDesigner = () => {
     });
   };
   const { form } = useFormBlockContext();
-  const record = useRecord();
+  const record = useCollectionRecord();
   const scope = useVariableOptions({
     collectionField: { uiSchema: fieldSchema },
     form,
@@ -78,8 +77,8 @@ export const DataeaseEmbedingDesigner = () => {
     noDisabled: true,
   });
   return (
-    // @ts-ignore
-    <GeneralSchemaDesigner>
+    <>
+      <SchemaToolbar></SchemaToolbar>
       <SchemaSettingsModalItem
         title={t('Edit Dataease Embeding')}
         asyncGetInitialValues={async () => {
@@ -184,6 +183,6 @@ export const DataeaseEmbedingDesigner = () => {
           'x-component': 'Grid',
         }}
       />
-    </GeneralSchemaDesigner>
+    </>
   );
 };
