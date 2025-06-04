@@ -140,3 +140,7 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# Ignore plugin specific compiled code and dependencies
+plugin-dataease-embeding/dist/
+plugin-dataease-embeding/node_modules/
