@@ -13,7 +13,8 @@ export class PluginDataeaseEmbedingServer extends Plugin {
       actions: {
         generate,
       },
-      only: ['generate'],
+      // only: ['generate'],
+      
     });
   }
 
@@ -21,9 +22,19 @@ export class PluginDataeaseEmbedingServer extends Plugin {
     this.app.acl.allow(this.resoureName, 'generate', 'loggedIn');
   }
 
-  async install() { }
+  async install() {
+    const repo = this.db.getRepository<any>('collections');
+    if (repo) {
+      await repo.db2cm('dataeaseEmbeding')
+    }
+  }
 
-  async afterEnable() { }
+  async afterEnable() {
+    const repo = this.db.getRepository<any>('collections');
+    if (repo) {
+      await repo.db2cm('dataeaseEmbeding')
+    }
+  }
 
   async afterDisable() { }
 
