@@ -32,9 +32,42 @@ module.exports = __toCommonJS(dataeaseEmbeding_exports);
 var import_database = require("@nocobase/database");
 var dataeaseEmbeding_default = (0, import_database.defineCollection)({
   name: "dataeaseEmbeding",
+  title: '{{t("Dataease Embeding")}}',
+  shared: true,
+  logging: true,
+  createdBy: true,
+  updatedBy: true,
+  sortable: true,
   fields: [
-    { type: "string", name: "appId" },
-    { type: "string", name: "appSecret" },
-    { type: "string", name: "account" }
+    {
+      type: "string",
+      name: "appId",
+      interface: "input",
+      uiSchema: {
+        type: "string",
+        title: '{{t("appId")}}',
+        "x-component": "Input"
+      }
+    },
+    {
+      type: "string",
+      name: "appSecret",
+      interface: "input",
+      uiSchema: {
+        type: "string",
+        title: '{{t("appSecret")}}',
+        "x-component": "Input"
+      }
+    },
+    {
+      type: "string",
+      name: "account",
+      interface: "input",
+      uiSchema: {
+        type: "string",
+        title: '{{t("account")}}',
+        "x-component": "Input"
+      }
+    }
   ]
 });

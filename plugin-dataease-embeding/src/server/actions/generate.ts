@@ -1,4 +1,5 @@
 import { Context, Next } from '@nocobase/actions';
+import { Console } from 'console';
 import crypto from 'crypto';
 
 export async function generate(ctx: Context, next: Next) {

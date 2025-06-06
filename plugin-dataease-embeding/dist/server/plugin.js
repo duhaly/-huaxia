@@ -41,16 +41,24 @@ class PluginDataeaseEmbedingServer extends import_server.Plugin {
       name: this.resoureName,
       actions: {
         generate: import_generate.generate
-      },
-      only: ["generate"]
+      }
+      // only: ['generate'],
     });
   }
   async load() {
     this.app.acl.allow(this.resoureName, "generate", "loggedIn");
   }
   async install() {
+    const repo = this.db.getRepository("collections");
+    if (repo) {
+      await repo.db2cm("dataeaseEmbeding");
+    }
   }
   async afterEnable() {
+    const repo = this.db.getRepository("collections");
+    if (repo) {
+      await repo.db2cm("dataeaseEmbeding");
+    }
   }
   async afterDisable() {
   }

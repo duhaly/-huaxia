@@ -10,13 +10,13 @@
 module.exports = {
   "@formily/react": "2.3.7",
   "@formily/shared": "2.3.7",
-  "@nocobase/client": "1.6.37",
+  "@nocobase/client": "1.7.1",
   "react": "18.3.1",
   "react-i18next": "11.18.6",
   "antd": "5.12.8",
   "@ant-design/icons": "5.6.1",
-  "@formily/antd-v5": "1.1.9",
-  "@nocobase/server": "1.6.37",
-  "@nocobase/actions": "1.6.37",
-  "@nocobase/database": "1.6.37"
+  "@formily/antd-v5": "1.2.3",
+  "@nocobase/server": "1.7.1",
+  "@nocobase/actions": "1.7.1",
+  "@nocobase/database": "1.7.1"
 };
